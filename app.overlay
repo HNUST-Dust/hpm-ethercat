@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) 2025 HPMicro
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Reserve 0x200000..0x210000 (64K) for the EtherCAT flash EEPROM emulation
+ * used by ecat_e2p_emulation.c. slot1 is shrunk accordingly.
+ */
+
+&flash0 {
+	partitions {
+		slot1_partition: partition@1c3000 {
+			reg = <0x1c3000 0x3d000>;
+		};
+
+		ecat_eeprom_partition: partition@200000 {
+			label = "ecat-eeprom";
+			reg = <0x200000 0x10000>;
+		};
+	};
+};
