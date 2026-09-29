@@ -21,6 +21,9 @@
 #else
 #define PROTO extern
 #endif
+
+/* process data length: ECAT_PD_WORD_CNT * 4 bytes for each direction */
+#define ECAT_PD_WORD_CNT 8
 /******************************************************************************
 *                    Object 0x1600 : OutputCounter process data mapping
 ******************************************************************************/
@@ -34,11 +37,19 @@
 * \brief Object entry descriptions<br>
 * <br>
 * SubIndex 0<br>
-* SubIndex 1 - Reference to 0x7010.0<br>
+* SubIndex 1-N - Reference to 0x7010.1-N (one description per entry,
+* USE_SINGLE_PDO_MAPPING_ENTRY_DESCR is 0)
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1600[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex1 - Reference to 0x7010.0 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex1-8 - Reference to 0x7010.1-8 */
 
 /**
 * \brief Object/Entry names
@@ -53,7 +64,7 @@ OBJCONST UCHAR OBJMEM aName0x1600[] = "OutputCounter process data mapping\000"
 */
 typedef struct OBJ_STRUCT_PACKED_START {
 UINT16 u16SubIndex0;
-UINT32 SI1; /* Subindex1 - Reference to 0x7010.0 */
+UINT32 aEntries[ECAT_PD_WORD_CNT]; /* Subindex1-N - Reference to 0x7010.1-N */
 } OBJ_STRUCT_PACKED_END
 TOBJ1600;
 #endif //#ifndef _DIGITAL_IO_OBJECTS_H_
@@ -63,7 +74,7 @@ TOBJ1600;
 */
 PROTO TOBJ1600 OutputCounterProcessDataMapping0x1600
 #if defined(_DIGITAL_IO_) && (_DIGITAL_IO_ == 1)
-={1,0x70100020}
+={ECAT_PD_WORD_CNT,{0x70100120,0x70100220,0x70100320,0x70100420,0x70100520,0x70100620,0x70100720,0x70100820}}
 #endif
 ;
 /** @}*/
@@ -83,11 +94,19 @@ PROTO TOBJ1600 OutputCounterProcessDataMapping0x1600
 * \brief Object entry descriptions<br>
 * <br>
 * SubIndex 0<br>
-* SubIndex 1 - Reference to 0x6000.0<br>
+* SubIndex 1-N - Reference to 0x6000.1-N (one description per entry,
+* USE_SINGLE_PDO_MAPPING_ENTRY_DESCR is 0)
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex1 - Reference to 0x6000.0 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex1-8 - Reference to 0x6000.1-8 */
 
 /**
 * \brief Object/Entry names
@@ -102,7 +121,7 @@ OBJCONST UCHAR OBJMEM aName0x1A00[] = "InputCounter process data mapping\000"
 */
 typedef struct OBJ_STRUCT_PACKED_START {
 UINT16 u16SubIndex0;
-UINT32 SI1; /* Subindex1 - Reference to 0x6000.0 */
+UINT32 aEntries[ECAT_PD_WORD_CNT]; /* Subindex1-N - Reference to 0x6000.1-N */
 } OBJ_STRUCT_PACKED_END
 TOBJ1A00;
 #endif //#ifndef _DIGITAL_IO_OBJECTS_H_
@@ -112,7 +131,7 @@ TOBJ1A00;
 */
 PROTO TOBJ1A00 InputCounterProcessDataMapping0x1A00
 #if defined(_DIGITAL_IO_) && (_DIGITAL_IO_ == 1)
-={1,0x60000020}
+={ECAT_PD_WORD_CNT,{0x60000120,0x60000220,0x60000320,0x60000420,0x60000520,0x60000620,0x60000720,0x60000820}}
 #endif
 ;
 /** @}*/
@@ -227,21 +246,34 @@ PROTO TOBJ1C13 sTxPDOassign
 */
 #ifdef _OBJD_
 /**
-* \brief Entry description
+* \brief Entry descriptions (Subindex 1 - N use the same description)
 */
-OBJCONST TSDOINFOENTRYDESC    OBJMEM sEntryDesc0x6000 = { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ | OBJACCESS_TXPDOMAPPING };
+OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
+{ DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ | OBJACCESS_TXPDOMAPPING }};
 /**
 * \brief Object name
 */
 OBJCONST UCHAR OBJMEM aName0x6000[] = "InputCounter\000\377";
 #endif //#ifdef _OBJD_
 
+#ifndef _DIGITAL_IO_OBJECTS_H_
+/**
+* \brief Object structure
+*/
+typedef struct OBJ_STRUCT_PACKED_START {
+UINT16 u16SubIndex0;
+UINT32 aEntries[ECAT_PD_WORD_CNT];
+} OBJ_STRUCT_PACKED_END
+TOBJ6000;
+#endif //#ifndef _DIGITAL_IO_OBJECTS_H_
+
 /**
 * \brief Object variable
 */
-PROTO UINT32 InputCounter0x6000
+PROTO TOBJ6000 InputCounter0x6000
 #if defined(_DIGITAL_IO_) && (_DIGITAL_IO_ == 1)
-= 0x00000000
+={ECAT_PD_WORD_CNT,{0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000}}
 #endif
 ;
 /** @}*/
@@ -258,21 +290,34 @@ PROTO UINT32 InputCounter0x6000
 */
 #ifdef _OBJD_
 /**
-* \brief Entry description
+* \brief Entry descriptions (Subindex 1 - N use the same description)
 */
-OBJCONST TSDOINFOENTRYDESC    OBJMEM sEntryDesc0x7010 = { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READWRITE | OBJACCESS_RXPDOMAPPING };
+OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
+{ DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READWRITE | OBJACCESS_RXPDOMAPPING }};
 /**
 * \brief Object name
 */
 OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputCounter\000\377";
 #endif //#ifdef _OBJD_
 
+#ifndef _DIGITAL_IO_OBJECTS_H_
+/**
+* \brief Object structure
+*/
+typedef struct OBJ_STRUCT_PACKED_START {
+UINT16 u16SubIndex0;
+UINT32 aEntries[ECAT_PD_WORD_CNT];
+} OBJ_STRUCT_PACKED_END
+TOBJ7010;
+#endif //#ifndef _DIGITAL_IO_OBJECTS_H_
+
 /**
 * \brief Object variable
 */
-PROTO UINT32 OutputCounter0x7010
+PROTO TOBJ7010 OutputCounter0x7010
 #if defined(_DIGITAL_IO_) && (_DIGITAL_IO_ == 1)
-= 0x00000000
+={ECAT_PD_WORD_CNT,{0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000}}
 #endif
 ;
 /** @}*/
@@ -369,9 +414,9 @@ PROTO TOBJF000 ModularDeviceProfile0xF000
 #ifdef _OBJD_
 TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1600 */
-{NULL , NULL ,  0x1600 , {DEFTYPE_PDOMAPPING , 1 | (OBJCODE_REC << 8)} , asEntryDesc0x1600 , aName0x1600 , &OutputCounterProcessDataMapping0x1600 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1600 , {DEFTYPE_PDOMAPPING , ECAT_PD_WORD_CNT | (OBJCODE_REC << 8)} , asEntryDesc0x1600 , aName0x1600 , &OutputCounterProcessDataMapping0x1600 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
-{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 1 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputCounterProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , ECAT_PD_WORD_CNT | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputCounterProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
 {NULL , NULL ,  0x1C12 , {DEFTYPE_UNSIGNED16 , 1 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C12 , aName0x1C12 , &sRxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x1C13 */
@@ -379,9 +424,9 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x2000 */
 {NULL , NULL ,  0x2000 , {DEFTYPE_UNSIGNED32 , 0 | (OBJCODE_VAR << 8)} , &sEntryDesc0x2000 , aName0x2000 , &MyMbxData0x2000 , NULL , NULL , 0x0000 },
 /* Object 0x6000 */
-{NULL , NULL ,  0x6000 , {DEFTYPE_UNSIGNED32 , 0 | (OBJCODE_VAR << 8)} , &sEntryDesc0x6000 , aName0x6000 , &InputCounter0x6000 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x6000 , {DEFTYPE_UNSIGNED32 , ECAT_PD_WORD_CNT | (OBJCODE_ARR << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputCounter0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
-{NULL , NULL ,  0x7010 , {DEFTYPE_UNSIGNED32 , 0 | (OBJCODE_VAR << 8)} , &sEntryDesc0x7010 , aName0x7010 , &OutputCounter0x7010 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x7010 , {DEFTYPE_UNSIGNED32 , ECAT_PD_WORD_CNT | (OBJCODE_ARR << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputCounter0x7010 , NULL , NULL , 0x0000 },
 /* Object 0xF000 */
 {NULL , NULL ,  0xF000 , {DEFTYPE_RECORD , 2 | (OBJCODE_REC << 8)} , asEntryDesc0xF000 , aName0xF000 , &ModularDeviceProfile0xF000 , NULL , NULL , 0x0000 },
 {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};

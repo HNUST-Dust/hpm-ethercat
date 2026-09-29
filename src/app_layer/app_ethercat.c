@@ -48,6 +48,17 @@ void APPL_SetLed(UINT32 value);
 ------
 -----------------------------------------------------------------------------------------*/
 
+/* 回环统计:中断上下文里只做计数和连续性检查,不在 ISR 里逐帧打印 */
+static struct {
+    UINT32 frameCnt;    /* 处理的帧数 */
+    UINT32 gapCnt;      /* 序列不连续次数 */
+    UINT32 missedFrames;/* 按跳变推算丢失的帧数 */
+    UINT32 firstWord;   /* 首帧首字 */
+    UINT32 lastWord;    /* 末帧首字 */
+    UINT32 expectNext;  /* 期望的下一帧首字 */
+    UINT8  started;
+} appl_sm2_stat;
+
 /*-----------------------------------------------------------------------------------------
 ------
 ------    application specific functions
@@ -153,6 +164,8 @@ UINT16 APPL_StopInputHandler(void)
 
 UINT16 APPL_StartOutputHandler(void)
 {
+    /* 重置回环统计,支持反复测试 */
+    memset(&appl_sm2_stat, 0, sizeof(appl_sm2_stat));
     return ALSTATUSCODE_NOERROR;
 }
 
@@ -168,6 +181,12 @@ UINT16 APPL_StartOutputHandler(void)
 
 UINT16 APPL_StopOutputHandler(void)
 {
+    /* 退出 OP 时汇总打印一次(逐帧 printk 在中断里太慢,会丢帧) */
+    if (appl_sm2_stat.started) {
+        printk("SM2 stat: frames=%u gaps=%u missed=%u first=0x%08x last=0x%08x\n",
+               appl_sm2_stat.frameCnt, appl_sm2_stat.gapCnt, appl_sm2_stat.missedFrames,
+               appl_sm2_stat.firstWord, appl_sm2_stat.lastWord);
+    }
     return ALSTATUSCODE_NOERROR;
 }
 
@@ -259,7 +278,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize, UINT16 *pOutputSize)
 */
 void APPL_InputMapping(UINT16 *pData)
 {
-    MEMCPY(pData, &InputCounter0x6000, SIZEOF(InputCounter0x6000));
+    MEMCPY(pData, &InputCounter0x6000.aEntries[0], SIZEOF(InputCounter0x6000.aEntries));
 }
 
 /**
@@ -270,7 +289,7 @@ void APPL_InputMapping(UINT16 *pData)
 */
 void APPL_OutputMapping(UINT16 *pData)
 {
-    MEMCPY(&OutputCounter0x7010, pData, SIZEOF(OutputCounter0x7010));
+    MEMCPY(&OutputCounter0x7010.aEntries[0], pData, SIZEOF(OutputCounter0x7010.aEntries));
 }
 
 /**
@@ -279,16 +298,25 @@ void APPL_OutputMapping(UINT16 *pData)
 */
 void APPL_Application(void)
 {
-    static UINT32 lastSm2 = 0;
-    UINT32 rawSm2;
+    UINT32 rawSm2[ECAT_PD_WORD_CNT];
     /* 直读SM2原始缓冲区(主站写入的输出数据,地址来自栈读回的SM配置) */
-    HW_EscReadDWord(rawSm2, nEscAddrOutputData);
-    if (rawSm2 != lastSm2) {
-        lastSm2 = rawSm2;
-        printk("SM2: 0x%08x\n", rawSm2);
+    HW_EscRead(rawSm2, nEscAddrOutputData, SIZEOF(rawSm2));
+    /* 回环:主站写什么就回什么,SOEM侧可验证 */
+    MEMCPY(InputCounter0x6000.aEntries, rawSm2, SIZEOF(rawSm2));
+
+    if (!appl_sm2_stat.started) {
+        appl_sm2_stat.started = 1;
+        appl_sm2_stat.firstWord = rawSm2[0];
+    } else if (rawSm2[0] != appl_sm2_stat.expectNext) {
+        appl_sm2_stat.gapCnt++;
+        if (rawSm2[0] > appl_sm2_stat.expectNext) {
+            appl_sm2_stat.missedFrames += (rawSm2[0] - appl_sm2_stat.expectNext) / ECAT_PD_WORD_CNT;
+        }
     }
-    InputCounter0x6000 = rawSm2; /* 回环:主站写什么就回什么,SOEM侧可验证 */
-    APPL_SetLed(rawSm2);
+    appl_sm2_stat.expectNext = rawSm2[0] + ECAT_PD_WORD_CNT;
+    appl_sm2_stat.lastWord = rawSm2[0];
+    appl_sm2_stat.frameCnt++;
+    //APPL_SetLed(rawSm2[0]);
 }
 
 #if EXPLICIT_DEVICE_ID
